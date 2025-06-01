@@ -12,8 +12,8 @@
 
 ### Parts 
 Use these arfilliate links to support me!\
-[CC1101 Module](https://s.click.aliexpress.com/e/_DembjFr) \
-[ESP32 DevKit](https://s.click.aliexpress.com/e/_mPgipQY) \
+[CC1101 Module](https://s.click.aliexpress.com/e/_oDW0qJ2) \
+[ESP32 DevKit](https://s.click.aliexpress.com/e/_oFlbQRE) \
 Some cables
 
 ### Wiring
