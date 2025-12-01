@@ -34,6 +34,7 @@
   #define LED_BUILTIN 2
 #endif
 
+#define ARRAY_LENGTH(a) sizeof(a)/sizeof(a[0])
 
 WaterMeter waterMeter;
 
@@ -45,7 +46,7 @@ int cred = -1;
 
 int getWifiToConnect(int numSsid)
 {
-  for (int i = 0; i < NUM_SSID_CREDENTIALS; i++)
+  for (int i = 0; i < ARRAY_LENGTH(credentials); i++)
   {
     //Serial.println(WiFi.SSID(i));
     
@@ -56,10 +57,10 @@ int getWifiToConnect(int numSsid)
       Serial.print(WiFi.SSID(i).c_str());
       Serial.print(" = ");
       Serial.println(credentials[j][0]);*/
-      if (strcmp(WiFi.SSID(j).c_str(), credentials[i][0]) == 0)
+      if (strcmp(WiFi.SSID(j).c_str(), credentials[i].ssid) == 0)
       {
         Serial.println("Credentials found for: ");
-        Serial.println(credentials[i][0]);
+        Serial.println(credentials[i].ssid);
         return i;
       }
     }
@@ -102,10 +103,11 @@ bool ConnectWifi(void)
   }
 
   // try to connect
-  WiFi.begin(credentials[cred][0], credentials[cred][1]);
+  WiFi.setHostname(credentials[cred].hostName);
+  WiFi.begin(credentials[cred].ssid, credentials[cred].password);
   Serial.println("");
   Serial.print("Connecting to WiFi ");
-  Serial.println(credentials[cred][0]);
+  Serial.println(credentials[cred].ssid);
 
   i = 0;
   while (WiFi.status() != WL_CONNECTED)
@@ -171,11 +173,11 @@ void mqttCallback(char* topic, byte* payload, unsigned int len)
 
 bool mqttConnect()
 {
-  mqttClient.setServer(credentials[cred][2], 1883);
+  mqttClient.setServer(credentials[cred].mqttAddress, credentials[cred].mqttPort);
   mqttClient.setCallback(mqttCallback);
 
   // connect client to retainable last will message
-  return mqttClient.connect(ESP_NAME, mqtt_user, mqtt_pass, "watermeter/0/online", 0, true, "False");
+  return mqttClient.connect(ESP_NAME, credentials[cred].mqttUser, credentials[cred].mqttPassword, "watermeter/0/online", 0, true, "False");
 }
 
 void  mqttMyData(const char* debug_str)
@@ -321,7 +323,7 @@ void loop()
       {
         Serial.println("");
         Serial.print("Connected to ");
-        Serial.println(credentials[cred][0]); // FIXME
+        Serial.println(credentials[cred].ssid); // FIXME
         Serial.print("IP address: ");
         Serial.println(WiFi.localIP());
 
@@ -353,7 +355,7 @@ void loop()
       }
       
       Serial.print("try to connect to MQTT server ");
-      Serial.println(credentials[cred][2]); // FIXME
+      Serial.println(credentials[cred].mqttAddress); // FIXME
 
       if (mqttConnect())
       {
