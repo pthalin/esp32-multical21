@@ -22,7 +22,7 @@ Some cables
 | --- | --- |
 | VCC | 3V3 |
 | GND | GND |
-| CSN | P4 |
+| CSN | P5 |
 | MOSI| P23 |
 | MISO| P19 |
 | SCK | P18 |
