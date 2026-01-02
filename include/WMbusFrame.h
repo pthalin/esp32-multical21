@@ -12,7 +12,7 @@ class WMBusFrame
   public:
     static const uint8_t MAX_LENGTH = 64;
   private:
-    CTR<AESSmall128> aes128;
+    CTR<AES128> aes128;
     uint8_t cipher[MAX_LENGTH];
     uint8_t plaintext[MAX_LENGTH];
     uint8_t iv[16];

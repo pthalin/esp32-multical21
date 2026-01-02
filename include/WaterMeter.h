@@ -181,7 +181,7 @@ class WaterMeter
   private:
     inline void selectCC1101(void);
     inline void deselectCC1101(void);
-    inline void waitMiso(void);
+    inline u_int8_t waitMiso(void);
 
     // flush fifo and (re)start receiver
     void startReceiver(void);
@@ -208,7 +208,7 @@ class WaterMeter
     void initializeRegisters(void);
 
     // reset cc1101
-    void reset(void);
+    uint8_t reset(void);
 
     // receive a wmbus frame 
     void receive(WMBusFrame *payload);

@@ -43,6 +43,17 @@ PubSubClient mqttClient(espMqttClient);
 char MyIp[16];
 int cred = -1;
 
+void blink(unsigned int t) {
+
+    for(int i=0; i < 20; i++)
+    {
+      digitalWrite(LED_BUILTIN, LOW); //off
+      delay(t);
+      Serial.print(".");
+      digitalWrite(LED_BUILTIN, HIGH); //on
+      delay(t);
+    }
+}
 int getWifiToConnect(int numSsid)
 {
   for (int i = 0; i < NUM_SSID_CREDENTIALS; i++)
@@ -276,10 +287,13 @@ void waterMeterLoop()
 void setup()
 {
     pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH); // on 
 
     Serial.begin(115200);
 
+    blink(100);
     waterMeter.begin();
+    digitalWrite(LED_BUILTIN, LOW); // off 
     Serial.println("Setup done...");
 }
 
@@ -313,6 +327,7 @@ void loop()
     case StateWifiConnect:
       //Serial.println("StateWifiConnect:");
       // station mode
+      blink(200);
       ConnectWifi();
 
       delay(500);
@@ -384,7 +399,7 @@ void loop()
         mqttSubscribe();
         
         ControlState = StateOperating;
-        digitalWrite(LED_BUILTIN, LOW); // on
+        digitalWrite(LED_BUILTIN, LOW); // off
         Serial.println("StateOperating:");
         //mqttDebug("up and running");
       }

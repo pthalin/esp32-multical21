@@ -32,9 +32,13 @@ inline void WaterMeter::deselectCC1101(void)
 }
 
 // wait for MISO pulling down
-inline void WaterMeter::waitMiso(void)
+inline uint8_t WaterMeter::waitMiso(void)
 {
-  while(digitalRead(MISO) == HIGH);
+  for(uint16_t cnt=0; cnt < 10000; cnt++){
+    if(digitalRead(MISO) == HIGH)
+      return 1;
+  }
+  return 0;
 }
 
 // write a single register of CC1101
@@ -90,26 +94,28 @@ void WaterMeter::readBurstReg(uint8_t * buffer, uint8_t regAddr, uint8_t len)
 }
 
 // power on reset
-void WaterMeter::reset(void) 
+uint8_t WaterMeter::reset(void) 
 {
+  uint8_t status = 0; 
   deselectCC1101();                    // Deselect CC1101
-  delayMicroseconds(3);
+  delayMicroseconds(5);
   
   digitalWrite(MOSI, LOW);
   digitalWrite(SCK, HIGH);		// see CC1101 datasheet 11.3
 
   selectCC1101();                      // Select CC1101
-  delayMicroseconds(3);
+  delayMicroseconds(10);
   deselectCC1101();                    // Deselect CC1101
   delayMicroseconds(45);		// at least 40 us
 
   selectCC1101();                      // Select CC1101
 
-  waitMiso();                          // Wait until MISO goes low
+  status = waitMiso();                          // Wait until MISO goes low
   SPI.transfer(CC1101_SRES);            // Send reset command strobe
-  waitMiso();                          // Wait until MISO goes low
+  status = waitMiso();                          // Wait until MISO goes low
 
   deselectCC1101();                    // Deselect CC1101
+  return status;
 }
 
 // set IDLE state, flush FIFO and (re)start receiver
@@ -209,13 +215,18 @@ bool WaterMeter::isFrameAvailable(void)
 // Initialize CC1101 to receive WMBus MODE C1 
 void WaterMeter::begin()
 {
+  uint8_t status = 0;
   pinMode(SS, OUTPUT);	// SS Pin -> Output
   SPI.begin();                          // Initialize SPI interface
+  SPI.setFrequency(5000000);
+  
   pinMode(CC1101_GDO0, INPUT);          // Config GDO0 as input
 
-  reset();                              // power on CC1101
-
-  //Serial.println("Setting CC1101 registers");
+  while(reset() == 0) {                             // power on CC1101
+    Serial.println("Reset CC1101 Failed. Retrying...");
+  }
+  Serial.println("Reset CC1101 Done.");
+  Serial.println("Setting CC1101 registers");
   initializeRegisters();                // init CC1101 registers
 
   cmdStrobe(CC1101_SCAL);
