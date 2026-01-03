@@ -13,24 +13,24 @@
 ### Parts 
 Use these arfilliate links to support me!\
 [CC1101 Module](https://s.click.aliexpress.com/e/_oDW0qJ2) \
-[ESP32 DevKit](https://s.click.aliexpress.com/e/_oFlbQRE) \
+[ESP32 ESP32-C3 Super Mini](https://s.click.aliexpress.com/e/_c3HOPvoX) \
 Some cables
 
 ### Wiring
 
-| CC1101 | ESP32 |
+| CC1101 | ESP32-C3 Super Mini |
 | --- | --- |
 | VCC | 3V3 |
 | GND | GND |
-| CSN | P4 |
-| MOSI| P23 |
-| MISO| P19 |
-| SCK | P18 |
-| GD0 | P32 |
+| CSN | 7 |
+| MOSI| 6 |
+| MISO| 5 |
+| SCK | 4 |
+| GD0 | 10 |
 | GD2 | Not Connected |
 
 
-<img height="300" src="images/device.jpg"> <img height="300" src="images/wires.jpg">
+<img height="300" src="images/esp32_c3_mini.jpg"> <img height="300" src="images/esp32_c3_mini_pinout.jpg"> 
 
 ### Build and Upload Firmware
 * Make sure you have a decryption key for your meter (you need to ask your water service provider for it).
