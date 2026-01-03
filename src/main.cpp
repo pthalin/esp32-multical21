@@ -15,7 +15,9 @@
 #if defined(ESP8266)
   #include <ESP8266WiFi.h>
   #include <ESP8266mDNS.h>
+  #ifdef DEBUG
   #include <SoftwareSerial.h>
+  #endif
 #elif defined(ESP32)
   #include <WiFi.h>
   #include <ESPmDNS.h>
@@ -28,13 +30,8 @@
 
 #define ESP_NAME "WaterMeter"
 
-#define DEBUG 0
-
-#if defined(ESP32)
-  #define LED_BUILTIN 2
-#endif
-
-
+#include "debug.h"
+ 
 WaterMeter waterMeter;
 
 WiFiClient espMqttClient;
@@ -49,7 +46,7 @@ void blink(unsigned int t) {
     {
       digitalWrite(LED_BUILTIN, LOW); //off
       delay(t);
-      Serial.print(".");
+      DEBUG_PRINT(".");
       digitalWrite(LED_BUILTIN, HIGH); //on
       delay(t);
     }
@@ -58,19 +55,19 @@ int getWifiToConnect(int numSsid)
 {
   for (int i = 0; i < NUM_SSID_CREDENTIALS; i++)
   {
-    //Serial.println(WiFi.SSID(i));
+    //DEBUG_PRINTLN(WiFi.SSID(i));
     
     for (int j = 0; j < numSsid; ++j)
     {
-      /*Serial.print(j);
-      Serial.print(": ");
-      Serial.print(WiFi.SSID(i).c_str());
-      Serial.print(" = ");
-      Serial.println(credentials[j][0]);*/
+      /*DEBUG_PRINT(j);
+      DEBUG_PRINT(": ");
+      DEBUG_PRINT(WiFi.SSID(i).c_str());
+      DEBUG_PRINT(" = ");
+      DEBUG_PRINTLN(credentials[j][0]);*/
       if (strcmp(WiFi.SSID(j).c_str(), credentials[i][0]) == 0)
       {
-        Serial.println("Credentials found for: ");
-        Serial.println(credentials[i][0]);
+        DEBUG_PRINTLN("Credentials found for: ");
+        DEBUG_PRINTLN(credentials[i][0]);
         return i;
       }
     }
@@ -83,47 +80,47 @@ bool ConnectWifi(void)
 {
   int i = 0;
 
-  Serial.println("starting scan");
+  DEBUG_PRINTLN("starting scan");
   // scan for nearby networks:
   int numSsid = WiFi.scanNetworks();
 
-  Serial.print("scanning WIFI, found ");
-  Serial.print(numSsid);
-  Serial.println(" available access points:");
+  DEBUG_PRINT("scanning WIFI, found ");
+  DEBUG_PRINT(numSsid);
+  DEBUG_PRINTLN(" available access points:");
 
   if (numSsid == -1)
   {
-    Serial.println("Couldn't get a wifi connection");
+    DEBUG_PRINTLN("Couldn't get a wifi connection");
     return false;
   }
   
   for (int i = 0; i < numSsid; i++)
   {
-    Serial.print(i+1);
-    Serial.print(") ");
-    Serial.println(WiFi.SSID(i));
+    DEBUG_PRINT(i+1);
+    DEBUG_PRINT(") ");
+    DEBUG_PRINTLN(WiFi.SSID(i));
   }
 
   // search for given credentials
   cred = getWifiToConnect(numSsid);
   if (cred == -1)
   {
-    Serial.println("No Wifi!");
+    DEBUG_PRINTLN("No Wifi!");
     return false;
   }
 
   // try to connect
   WiFi.begin(credentials[cred][0], credentials[cred][1]);
-  Serial.println("");
-  Serial.print("Connecting to WiFi ");
-  Serial.println(credentials[cred][0]);
+  DEBUG_PRINTLN("");
+  DEBUG_PRINT("Connecting to WiFi ");
+  DEBUG_PRINTLN(credentials[cred][0]);
 
   i = 0;
   while (WiFi.status() != WL_CONNECTED)
   {
     digitalWrite(LED_BUILTIN, LOW);
     delay(300);
-    Serial.print(".");
+    DEBUG_PRINT(".");
     digitalWrite(LED_BUILTIN, HIGH);
     delay(300);
     if (i++ > 30)
@@ -149,10 +146,10 @@ void mqttCallback(char* topic, byte* payload, unsigned int len)
   byte *p = new byte[len];
   memcpy(p, payload, len);
   
-/*  Serial.print("MQTT-RECV: ");
-  Serial.print(topic);
-  Serial.print(" ");
-  Serial.println((char)payload[0]); // FIXME LEN
+/*  DEBUG_PRINT("MQTT-RECV: ");
+  DEBUG_PRINT(topic);
+  DEBUG_PRINT(" ");
+  DEBUG_PRINTLN((char)payload[0]); // FIXME LEN
 */
   if (strstr(topic, "/smarthomeNG/start"))
   {
@@ -207,19 +204,19 @@ void mqttSubscribe()
   // publish online status
   s = "watermeter/0/online";
   mqttClient.publish(s.c_str(), "True", true);
-  Serial.print("MQTT-SEND: ");
-  Serial.print(s);
-  Serial.println(" True");
+  DEBUG_PRINT("MQTT-SEND: ");
+  DEBUG_PRINT(s);
+  DEBUG_PRINTLN(" True");
   
   // publish ip address
   s="watermeter/0/ipaddr";
   IPAddress MyIP = WiFi.localIP();
   snprintf(MyIp, 16, "%d.%d.%d.%d", MyIP[0], MyIP[1], MyIP[2], MyIP[3]);
   mqttClient.publish(s.c_str(), MyIp, true);
-  Serial.print("MQTT-SEND: ");
-  Serial.print(s);
-  Serial.print(" ");
-  Serial.println(MyIp);
+  DEBUG_PRINT("MQTT-SEND: ");
+  DEBUG_PRINT(s);
+  DEBUG_PRINT(" ");
+  DEBUG_PRINTLN(MyIp);
 
   // if smarthome.py restarts -> publish init values
   s = "/smarthomeNG/start";
@@ -255,21 +252,27 @@ void setupOTA()
     }
 
     // NOTE: if updating FS this would be the place to unmount FS using FS.end()
+    #ifdef DEBUG
     Serial.println("Start updating " + type);
+    #endif
   });
   ArduinoOTA.onEnd([]() {
+    #ifdef DEBUG
     Serial.println("\nEnd");
+    #endif
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    DEBUG_PRINTF("Progress: %u%%\r", (progress / (total / 100)));
   });
   ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
+    #ifdef DEBUG
+    DEBUG_PRINTF("Error[%u]: ", error);
     if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
     else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
     else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
     else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
     else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    #endif
   });
   ArduinoOTA.begin();
 }
@@ -289,12 +292,12 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH); // on 
 
-    Serial.begin(115200);
+    DEBUG_BEGIN(115200);
 
     blink(100);
     waterMeter.begin();
     digitalWrite(LED_BUILTIN, LOW); // off 
-    Serial.println("Setup done...");
+    DEBUG_PRINTLN("Setup done...");
 }
 
 enum ControlStateType
@@ -312,20 +315,20 @@ void loop()
   switch (ControlState)
   {
     case StateInit:
-      //Serial.println("StateInit:");
+      //DEBUG_PRINTLN("StateInit:");
       WiFi.mode(WIFI_STA);
 
       ControlState = StateNotConnected;
       break;
 
     case StateNotConnected:
-      //Serial.println("StateNotConnected:");
+      //DEBUG_PRINTLN("StateNotConnected:");
 
       ControlState = StateWifiConnect;
       break;
       
     case StateWifiConnect:
-      //Serial.println("StateWifiConnect:");
+      //DEBUG_PRINTLN("StateWifiConnect:");
       // station mode
       blink(200);
       ConnectWifi();
@@ -334,11 +337,11 @@ void loop()
       
       if (WiFi.status() == WL_CONNECTED)
       {
-        Serial.println("");
-        Serial.print("Connected to ");
-        Serial.println(credentials[cred][0]); // FIXME
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP());
+        DEBUG_PRINTLN("");
+        DEBUG_PRINT("Connected to ");
+        DEBUG_PRINTLN(credentials[cred][0]); // FIXME
+        DEBUG_PRINT("IP address: ");
+        DEBUG_PRINTLN(WiFi.localIP());
 
         setupOTA();
         
@@ -346,8 +349,8 @@ void loop()
       }
       else
       {
-        Serial.println("");
-        Serial.println("Connection failed.");
+        DEBUG_PRINTLN("");
+        DEBUG_PRINTLN("Connection failed.");
 
         // try again
         ControlState = StateNotConnected;
@@ -358,7 +361,7 @@ void loop()
       break;
 
     case StateMqttConnect:
-      Serial.println("StateMqttConnect:");
+      DEBUG_PRINTLN("StateMqttConnect:");
       digitalWrite(LED_BUILTIN, HIGH); // off
 
       if (WiFi.status() != WL_CONNECTED)
@@ -367,8 +370,8 @@ void loop()
         break; // exit (hopefully) switch statement
       }
       
-      Serial.print("try to connect to MQTT server ");
-      Serial.println(credentials[cred][2]); // FIXME
+      DEBUG_PRINT("try to connect to MQTT server ");
+      DEBUG_PRINTLN(credentials[cred][2]); // FIXME
 
       if (mqttConnect())
       {
@@ -376,7 +379,7 @@ void loop()
       }
       else
       {
-        Serial.println("MQTT connect failed");
+        DEBUG_PRINTLN("MQTT connect failed");
 
         delay(1000);
         // try again
@@ -386,7 +389,7 @@ void loop()
       break;
 
     case StateConnected:
-      Serial.println("StateConnected:");
+      DEBUG_PRINTLN("StateConnected:");
 
       if (!mqttClient.connected())
       {
@@ -400,7 +403,7 @@ void loop()
         
         ControlState = StateOperating;
         digitalWrite(LED_BUILTIN, LOW); // off
-        Serial.println("StateOperating:");
+        DEBUG_PRINTLN("StateOperating:");
         //mqttDebug("up and running");
       }
       ArduinoOTA.handle();
@@ -408,7 +411,7 @@ void loop()
       break;
     
     case StateOperating:
-      //Serial.println("StateOperating:");
+      //DEBUG_PRINTLN("StateOperating:");
 
       if (WiFi.status() != WL_CONNECTED)
       {
@@ -418,7 +421,7 @@ void loop()
 
       if (!mqttClient.connected())
       {
-        Serial.println("not connected to MQTT server");
+        DEBUG_PRINTLN("not connected to MQTT server");
         ControlState = StateMqttConnect;
       }
 
@@ -432,6 +435,6 @@ void loop()
       break;
 
     default:
-      Serial.println("Error: invalid ControlState");  
+      DEBUG_PRINTLN("Error: invalid ControlState");  
   }
 }

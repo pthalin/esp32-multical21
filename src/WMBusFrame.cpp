@@ -17,6 +17,7 @@
 //#define FLOWIQ2200
 
 #include "WMbusFrame.h"
+#include "debug.h"
 
 void  mqttMyData(const char* debug_str);
 void  mqttMyDataJson(const char* debug_str);
@@ -38,11 +39,11 @@ void WMBusFrame::check()
         }
     }
 
-  Serial.printf("Payload: "); 
+  DEBUG_PRINTF("Payload: "); 
   for(int k=0; k < length; k++) { 
-    Serial.printf("%02x", payload[k]);
+    DEBUG_PRINTF("%02x", payload[k]);
   }
-  Serial.printf("\n\r");
+  DEBUG_PRINTF("\n\r");
 
   isValid = true;
 }
@@ -59,11 +60,11 @@ void WMBusFrame::printMeterInfo(uint8_t *data, size_t len)
   char mqttstring[25];
   char mqttjsondstring[100];
 
-  Serial.printf("Data: "); 
+  DEBUG_PRINTF("Data: "); 
   for(int k=0; k < len; k++) { 
-    Serial.printf("%02x", data[k]);
+    DEBUG_PRINTF("%02x", data[k]);
   }
-  Serial.printf("\n\r");
+  DEBUG_PRINTF("\n\r");
 
 #ifdef FLOWIQ2200
   if(data[2] == 0x79)  //compact frame
@@ -95,15 +96,15 @@ void WMBusFrame::printMeterInfo(uint8_t *data, size_t len)
 
   uint16_t calc_crc = crc16_EN13757(data+2, len-2);
   uint16_t read_crc = data[1] << 8 | data[0];
-  Serial.printf("calc_crc: 0x%04x\n\r", calc_crc);
-  Serial.printf("read_crc: 0x%04x\n\r", read_crc);
+  DEBUG_PRINTF("calc_crc: 0x%04x\n\r", calc_crc);
+  DEBUG_PRINTF("read_crc: 0x%04x\n\r", read_crc);
 
   if (calc_crc == read_crc) 
   {
-    Serial.printf("CRC: OK\n\r");
+    DEBUG_PRINTF("CRC: OK\n\r");
   }
   else{
-    Serial.printf("CRC: ERROR\n\r");
+    DEBUG_PRINTF("CRC: ERROR\n\r");
     return;
   }
 
@@ -114,7 +115,7 @@ void WMBusFrame::printMeterInfo(uint8_t *data, size_t len)
               + (data[pos_tt+2] << 16)
               + (data[pos_tt+3] << 24);
   snprintf(total, sizeof(total), "%d.%03d", tt/1000, tt%1000 );
-  Serial.printf("total: %s m%c - ", total, 179);
+  DEBUG_PRINTF("total: %s m%c - ", total, 179);
   snprintf(mqttstring, sizeof(mqttstring), "%d.%03d", tt/1000, tt%1000 );
   mqttMyData(mqttstring);
 
@@ -127,15 +128,15 @@ void WMBusFrame::printMeterInfo(uint8_t *data, size_t len)
               + (data[pos_tg+2] << 16)
               + (data[pos_tg+3] << 24);
   snprintf(target, sizeof(target), "%d.%03d", tg/1000, tg%1000 );
-  Serial.printf("target: %s m%c - ", target, 179);
+  DEBUG_PRINTF("target: %s m%c - ", target, 179);
 
   char flow_temp[3];
   snprintf(flow_temp, sizeof(flow_temp), "%2d", data[pos_ft]);
-  Serial.printf("%s %cC - ", flow_temp, 176);
+  DEBUG_PRINTF("%s %cC - ", flow_temp, 176);
 
   char ambient_temp[3];
   snprintf(ambient_temp, sizeof(ambient_temp), "%2d", data[pos_at]);
-  Serial.printf("%s %cC\n\r", ambient_temp, 176);
+  DEBUG_PRINTF("%s %cC\n\r", ambient_temp, 176);
 
   snprintf(mqttjsondstring, sizeof(mqttjsondstring), "{\"CurrentValue\": %d.%03d,\"MonthStartValue\": %d.%03d,\"WaterTemp\": %2d,\"RoomTemp\": %2d}",tt/1000, tt%1000, tg/1000, tg%1000, data[pos_ft],data[pos_at]);
 #endif
@@ -160,18 +161,18 @@ void WMBusFrame::decode()
   aes128.decrypt(plaintext, (const uint8_t *) cipher, cipherLength);
 
 /*
-  Serial.printf("C:     ");
+  DEBUG_PRINTF("C:     ");
   for (size_t i = 0; i < cipherLength; i++)
   {
-    Serial.printf("%02X", cipher[i]);
+    DEBUG_PRINTF("%02X", cipher[i]);
   }
-  Serial.println();
-  Serial.printf("P(%d): ", cipherLength);
+  DEBUG_PRINTLN();
+  DEBUG_PRINTF("P(%d): ", cipherLength);
   for (size_t i = 0; i < cipherLength; i++)
   {
-    Serial.printf("%02X", plaintext[i]);
+    DEBUG_PRINTF("%02X", plaintext[i]);
   }
-  Serial.println();
+  DEBUG_PRINTLN();
 */
 
   printMeterInfo(plaintext, cipherLength);

@@ -14,6 +14,7 @@
 
 #include "WaterMeter.h"
 #include "hwconfig.h"
+#include "debug.h"
 
 WaterMeter::WaterMeter()
 {
@@ -194,7 +195,7 @@ bool WaterMeter::isFrameAvailable(void)
 {
   if (packetAvailable)
   {
-    // Serial.println("packet received");
+    // DEBUG_PRINTLN("packet received");
     // Disable wireless reception interrupt
     detachInterrupt(digitalPinToInterrupt(CC1101_GDO0));
  
@@ -223,10 +224,10 @@ void WaterMeter::begin()
   pinMode(CC1101_GDO0, INPUT);          // Config GDO0 as input
 
   while(reset() == 0) {                             // power on CC1101
-    Serial.println("Reset CC1101 Failed. Retrying...");
+    DEBUG_PRINTLN("Reset CC1101 Failed. Retrying...");
   }
-  Serial.println("Reset CC1101 Done.");
-  Serial.println("Setting CC1101 registers");
+  DEBUG_PRINTLN("Reset CC1101 Done.");
+  DEBUG_PRINTLN("Setting CC1101 registers");
   initializeRegisters();                // init CC1101 registers
 
   cmdStrobe(CC1101_SCAL);
@@ -248,7 +249,7 @@ void WaterMeter::receive(WMBusFrame * frame)
   // read preamble, should be 0x543D
   uint8_t p1 = readByteFromFifo();
   uint8_t p2 = readByteFromFifo();
-  //Serial.printf("Preamble: %02x%02x\n\r", p1, p2);
+  //DEBUG_PRINTF("Preamble: %02x%02x\n\r", p1, p2);
 
   uint8_t payloadLength = readByteFromFifo();
 
@@ -259,7 +260,7 @@ void WaterMeter::receive(WMBusFrame * frame)
     // 3rd byte is payload length
     frame->length = payloadLength;
 
-    //Serial.printf("%02X", lfield);
+    //DEBUG_PRINTF("%02X", lfield);
 
     // starting with 1! index 0 is lfield
     for (int i = 0; i < payloadLength; i++)
@@ -273,5 +274,5 @@ void WaterMeter::receive(WMBusFrame * frame)
 
   // flush RX fifo and restart receiver
   startReceiver();
-  //Serial.printf("rxStatus: 0x%02x\n\r", readStatusReg(CC1101_RXBYTES));
+  //DEBUG_PRINTF("rxStatus: 0x%02x\n\r", readStatusReg(CC1101_RXBYTES));
 }
