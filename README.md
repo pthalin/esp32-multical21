@@ -13,7 +13,7 @@
 ### Parts 
 Use these arfilliate links to support me!\
 [CC1101 Module](https://s.click.aliexpress.com/e/_oDW0qJ2) \
-[ESP32 ESP32-C3 Super Mini](https://s.click.aliexpress.com/e/_c3HOPvoX) \
+[ESP32-C3 Super Mini](https://s.click.aliexpress.com/e/_c3HOPvoX) \
 Some cables
 
 ### Wiring
